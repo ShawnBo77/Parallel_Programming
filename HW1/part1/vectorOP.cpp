@@ -97,14 +97,22 @@ void clampedExpVector(float *values, int *exponents, float *output, int N)
 // You can assume VECTOR_WIDTH is a power of 2
 float arraySumVector(float *values, int N)
 {
+  // 假設是 N 是 VECTOR_WIDTH 的倍數
+  __pp_vec_float partial_sums = _pp_vset_float(0.f);
+  __pp_mask maskAll = _pp_init_ones();
 
-  //
-  // PP STUDENTS TODO: Implement your vectorized version of arraySumSerial here
-  //
+  for (int i = 0; i < N; i += VECTOR_WIDTH)
+  {
+    __pp_vec_float v;
+    _pp_vload_float(v, values + i, maskAll);
+    _pp_vadd_float(partial_sums, partial_sums, v, maskAll);
+  }
 
-  // for (int i = 0; i < N; i += VECTOR_WIDTH)
-  // {
-  // }
-  
-  return 0.0;
+  for (int i = VECTOR_WIDTH; i != 1; i /= 2) {
+      __pp_vec_float temp;
+      _pp_interleave_float(temp, partial_sums);
+      _pp_hadd_float(partial_sums, temp);
+  }
+
+  return partial_sums.value[0];
 }
