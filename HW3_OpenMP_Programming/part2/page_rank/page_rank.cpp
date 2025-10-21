@@ -21,6 +21,7 @@ void page_rank(Graph g, double *solution, double damping, double convergence)
 
     int nnodes = num_nodes(g);
     double equal_prob = 1.0 / nnodes;
+    #pragma omp parallel for
     for (int i = 0; i < nnodes; ++i)
     {
         solution[i] = equal_prob;
@@ -54,4 +55,69 @@ void page_rank(Graph g, double *solution, double damping, double convergence)
        }
 
      */
+
+    double *score_new = new double[nnodes];
+    double *contrib = new double[nnodes];
+    bool converged = false;
+    double global_diff = 0.0;
+
+    while (!converged)
+    {
+        // dangling (no outgoing edges) sum
+        double dangling_sum = 0.0;
+        #pragma omp parallel for reduction(+:dangling_sum)
+        for (int i = 0; i < nnodes; i++)
+        {
+            if (outgoing_size(g, i) == 0)
+            {
+                dangling_sum += solution[i];
+            }
+        }
+        double dangling_contrib = damping * dangling_sum / nnodes;
+
+        // 抽出來做，如果用 sum_incoming += solution[*vj] / outgoing_size(g, *vj) 
+        // outgoing_size 會一直重複計算
+        #pragma omp parallel for
+        for (int i = 0; i < nnodes; ++i) {
+            if (outgoing_size(g, i) > 0) {
+                contrib[i] = solution[i] / outgoing_size(g, i);
+            } else {
+                contrib[i] = 0.0;
+            }
+        }
+
+        #pragma omp parallel for
+        for (int i = 0; i < nnodes; i++)
+        {
+            double sum_incoming = 0.0;
+
+            const Vertex *start = incoming_begin(g, i);
+            const Vertex *end = incoming_end(g, i);
+            for (const Vertex *vj = start; vj != end; vj++)
+            {
+                sum_incoming += contrib[*vj];
+            }
+            
+            score_new[i] = damping * sum_incoming + (1.0 - damping) / nnodes + dangling_contrib;
+        }
+
+        global_diff = 0.0;
+        #pragma omp parallel for reduction(+:global_diff)
+        for (int i = 0; i < nnodes; ++i)
+        {
+            global_diff += std::abs(score_new[i] - solution[i]);
+        }
+        
+        converged = (global_diff < convergence);
+
+        // 更新分數
+        #pragma omp parallel for
+        for (int i = 0; i < nnodes; i++)
+        {
+            solution[i] = score_new[i];
+        }
+    }
+
+    delete[] score_new;
+    delete[] contrib;
 }
