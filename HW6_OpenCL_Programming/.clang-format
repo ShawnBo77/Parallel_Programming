@@ -1,0 +1,36 @@
+---
+Language: Cpp
+
+IndentWidth: 4
+UseTab: Never
+
+# Maximum line length before wrapping, 80 ~ 120 is common.
+ColumnLimit: 100
+
+IndentCaseLabels: true
+
+# Force pointers away from the type.
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+AlignConsecutiveMacros: Consecutive
+
+# Allow short blocks and function definitions on a single line only if they're empty.
+# This improves readability since single-line blocks are easier to overlook.
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+
+# Pack function call arguments into as few lines as possible.
+BinPackArguments: true
+# Do not pack function declaration parameters into a single line.
+# This helps readability when function signatures are long.
+BinPackParameters: false
+
+# Place binary operators at the beginning of the line to make them more visible.
+BreakBeforeBinaryOperators: All
+# Always break before braces.
+BreakBeforeBraces: Allman
+
+# Separate definition blocks with a blank line so they are easier to be identified.
+SeparateDefinitionBlocks: Always
+...
