@@ -68,6 +68,18 @@ __kernel void convolution(const int filter_width,
                 f_idx += 7;
             }
         }
+        else {
+            int w = image_width;
+            int f_idx = 0;
+            #pragma unroll
+            for (int k = -halo; k <= halo; k++) {
+                __global const float * row_ptr = img_ptr + k * w;
+                #pragma unroll
+                for (int l = -halo; l <= halo; l++) {
+                    sum += row_ptr[l] * filter[f_idx++];
+                }
+            }
+        }
     }
     else
     {
